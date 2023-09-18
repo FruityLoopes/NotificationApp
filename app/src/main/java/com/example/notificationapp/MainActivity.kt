@@ -1,88 +1,89 @@
 package com.example.notificationapp
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
+import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.os.Build
-import android.os.Bundle
-import android.widget.Button
-import android.widget.RemoteViews
 import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import com.example.notificationapp.databinding.ActivityMainBinding
+import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity()
+{
+    private lateinit var binding : ActivityMainBinding
 
-    // declaring variables
-    lateinit var notificationManager: NotificationManager
-    lateinit var notificationChannel: NotificationChannel
-    lateinit var builder: Notification.Builder
-    private val channelId = "i.apps.notifications"
-    private val description = "Test notification"
-
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?)
+    {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // accessing button
-        val btn = findViewById<Button>(R.id.btn)
-        // history button
-        val btnNotificationHistory = findViewById<Button>(R.id.btnNotificationHistory)
+        createNotificationChannel()
+        binding.submitButton.setOnClickListener { scheduleNotification() }
+    }
 
-        // it is a class to notify the user of events that happen.
-        // This is how you tell the user that something has happened in the
-        // background.
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private fun scheduleNotification()
+    {
+        val intent = Intent(applicationContext, Notification::class.java)
+        val title = binding.titleET.text.toString()
+        val message = binding.messageET.text.toString()
+        intent.putExtra(titleExtra, title)
+        intent.putExtra(messageExtra, message)
 
-        // onClick listener for the button
-        btn.setOnClickListener {
+        val pendingIntent = PendingIntent.getBroadcast(
+            applicationContext,
+            notificationID,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
-            // pendingIntent is an intent for future use i.e after
-            // the notification is clicked, this intent will come into action
-            val intent = Intent(this, afterNotification::class.java)
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val time = getTime()
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            time,
+            pendingIntent
+        )
+        showAlert(time, title, message)
+    }
 
-            // FLAG_UPDATE_CURRENT specifies that if a previous
-            // PendingIntent already exists, then the current one
-            // will update it with the latest intent
-            // 0 is the request code, using it later with the
-            // same method again will get back the same pending
-            // intent for future reference
-            // intent passed here is to our afterNotification class
-            val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    private fun showAlert(time: Long, title: String, message: String)
+    {
+        val date = Date(time)
+        val dateFormat = android.text.format.DateFormat.getLongDateFormat(applicationContext)
+        val timeFormat = android.text.format.DateFormat.getTimeFormat(applicationContext)
 
-            // RemoteViews are used to use the content of
-            // some different layout apart from the current activity layout
-            val contentView = RemoteViews(packageName, R.layout.activity_after_notification)
+        AlertDialog.Builder(this)
+            .setTitle("Notification Scheduled")
+            .setMessage(
+                "Title: " + title +
+                        "\nMessage: " + message +
+                        "\nAt: " + dateFormat.format(date) + " " + timeFormat.format(date))
+            .setPositiveButton("Okay"){_,_ ->}
+            .show()
+    }
 
-            // checking if android version is greater than oreo(API 26) or not
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                notificationChannel = NotificationChannel(channelId, description, NotificationManager.IMPORTANCE_HIGH)
-                notificationChannel.enableLights(true)
-                notificationChannel.lightColor = Color.GREEN
-                notificationChannel.enableVibration(false)
-                notificationManager.createNotificationChannel(notificationChannel)
+    private fun getTime(): Long
+    {
+        val minute = binding.timePicker.minute
+        val hour = binding.timePicker.hour
+        val day = binding.datePicker.dayOfMonth
+        val month = binding.datePicker.month
+        val year = binding.datePicker.year
 
-                builder = Notification.Builder(this, channelId)
-                    .setContent(contentView)
-                    .setSmallIcon(R.drawable.ic_launcher_background)
-                    .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.ic_launcher_background))
-                    .setContentIntent(pendingIntent)
-            } else {
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month, day, hour, minute)
+        return calendar.timeInMillis
+    }
 
-                builder = Notification.Builder(this)
-                    .setContent(contentView)
-                    .setSmallIcon(R.drawable.ic_launcher_background)
-                    .setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.ic_launcher_background))
-                    .setContentIntent(pendingIntent)
-            }
-            notificationManager.notify(1234, builder.build())
-
-            btnNotificationHistory.setOnClickListener {
-                //val intent = Intent(this, Notification_History::class.java)
-            }
-        }
+    private fun createNotificationChannel()
+    {
+        val name = "Notif Channel"
+        val desc = "A Description of the Channel"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(channelID, name, importance)
+        channel.description = desc
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 }
