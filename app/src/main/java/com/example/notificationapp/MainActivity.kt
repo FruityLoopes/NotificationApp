@@ -29,6 +29,8 @@ class MainActivity : AppCompatActivity() {
 
         // accessing button
         val btn = findViewById<Button>(R.id.btn)
+        // history button
+        val btnNotificationHistory = findViewById<Button>(R.id.btnNotificationHistory)
 
         // it is a class to notify the user of events that happen.
         // This is how you tell the user that something has happened in the
@@ -77,6 +79,10 @@ class MainActivity : AppCompatActivity() {
                     .setContentIntent(pendingIntent)
             }
             notificationManager.notify(1234, builder.build())
+
+            btnNotificationHistory.setOnClickListener {
+                //val intent = Intent(this, Notification_History::class.java)
+            }
         }
     }
 }
