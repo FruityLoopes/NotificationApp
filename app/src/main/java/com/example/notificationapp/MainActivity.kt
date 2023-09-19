@@ -1,10 +1,16 @@
 package com.example.notificationapp
 
+import android.Manifest
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.notificationapp.databinding.ActivityMainBinding
 import java.util.*
 
@@ -12,13 +18,30 @@ class MainActivity : AppCompatActivity()
 {
     private lateinit var binding : ActivityMainBinding
 
+
+
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        createNotificationChannel()
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            } else {
+               createNotificationChannel()
+            }
+        }
+
+
+        binding.btnSettings.setOnClickListener{
+            val settingsIntent: Intent = Intent(ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(EXTRA_APP_PACKAGE, packageName)
+                .putExtra(EXTRA_CHANNEL_ID, channelID)
+            startActivity(settingsIntent)
+        }
         binding.submitButton.setOnClickListener { scheduleNotification() }
     }
 
@@ -86,4 +109,7 @@ class MainActivity : AppCompatActivity()
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
     }
+
+
 }
+
