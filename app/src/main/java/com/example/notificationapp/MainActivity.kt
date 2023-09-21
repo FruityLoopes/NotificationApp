@@ -2,16 +2,21 @@ package com.example.notificationapp
 
 import android.Manifest
 import android.app.*
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings.*
+import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.notificationapp.databinding.ActivityMainBinding
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
 import java.util.*
 
 class MainActivity : AppCompatActivity()
@@ -33,8 +38,6 @@ class MainActivity : AppCompatActivity()
                createNotificationChannel()
             }
         }
-
-
         binding.btnSettings.setOnClickListener{
             val settingsIntent: Intent = Intent(ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
